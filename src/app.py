@@ -5,7 +5,7 @@ from OpenSSL import SSL
 from OpenSSL import crypto
 import certifi
 from pprint import pprint
-import json
+
 
 
 def main():
@@ -18,22 +18,22 @@ def main():
 
     certs = get_server_certificates("www.google.com")
 
-
+    verifycert(certs)
 
 # https://www.pyopenssl.org/en/stable/api/crypto.html#x509-objects
     for (idx, cert) in certs:
         # print(type(cert))
-        print(crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode('utf-8'))
+        # print(crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode('utf-8'))
 
-        print ("version", cert.get_version())
-        print ("シリアル番号", cert.get_serial_number())
-        print ("署名アルゴリズム", cert.get_signature_algorithm())
-        print ("発行者", cert.get_issuer().commonName)
-        print ("有効期限開始日", cert.get_notBefore())
-        print ("有効期限終了日", cert.get_notAfter())
-        print ("サブジェクト", cert.get_subject().commonName)
-        print ("公開鍵", cert.get_pubkey())
-        print ("署名以外の部分の証明書から作成したダイジェスト（ハッシュ）",cert.digest("sha256"))
+        # print ("version", cert.get_version())
+        # print ("シリアル番号", cert.get_serial_number())
+        # print ("署名アルゴリズム", cert.get_signature_algorithm())
+        # print ("発行者", cert.get_issuer().commonName)
+        # print ("有効期限開始日", cert.get_notBefore())
+        # print ("有効期限終了日", cert.get_notAfter())
+        # print ("サブジェクト", cert.get_subject().commonName)
+        # print ("公開鍵", cert.get_pubkey())
+        # print ("署名以外の部分の証明書から作成したダイジェスト（ハッシュ）",cert.digest("sha256"))
 
 
 
@@ -47,10 +47,10 @@ def main():
             # print(e.__str__())
 
             extension_data.update({e.get_short_name().decode('utf-8'):e.__str__()})
-        pprint(extension_data)
-        print(json.dumps(extension_data, ensure_ascii=False, indent=2))
+        # pprint(extension_data)
+        # print(json.dumps(extension_data, ensure_ascii=False, indent=2))
 
-        print("============================")
+        # print("============================")
 
     
 # どうやら、Pythonだと、証明書に含まれる署名を出すのは面倒臭そう
@@ -59,6 +59,32 @@ def main():
 
 # メッセージのハッシュ + 署名からダイジェスト作成
 # つまり　print ("署名以外の部分の証明書から作成したダイジェスト（ハッシュ）",cert.digest("sha256"))　と　署名部分からverifyした値が一致すればOK
+
+# RFC 5280 の Section 4.1 から抜粋した、証明書構造定義の一部,ようは　signatureValue　の取得方法が見つかってない。これが見つかれば、
+# signatureValue を verify したものと、 ダイジェストの検証が可能
+# コマンドだと以下
+# ssl_verify(certificate, signature, message, "​sha256").
+
+#    Certificate  ::=  SEQUENCE  {
+        # tbsCertificate       TBSCertificate,
+        # signatureAlgorithm   AlgorithmIdentifier,
+        # signatureValue       BIT STRING  }
+
+
+
+def verifycert(certs):
+    for (idx, cert) in certs:
+        print(crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode('utf-8'))
+
+    # 証明書を読み込み
+    pemCert = crypto.load_certificate(
+        crypto.FILETYPE_PEM, crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+
+    pemCert.signature
+
+
+
+
 
 
 
